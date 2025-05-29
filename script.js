@@ -198,123 +198,154 @@ document.addEventListener("DOMContentLoaded", () => {
     selectHorario.on("change", actualizarProgramas);
   }
 
-  function inicializarLogicaSede2() {
-    const selectCurso = $("#curso");
-    const selectPrograma = $("#programa");
-    const radiosTipoEstudio = $("input[name='tipoEstudio']");
-    const divCurso = $("#opcionesCurso");
-    const divPrograma = $("#opcionesPrograma");
-    const formulario = $("#formulario");
-    const inputNombre = $("#nombre");
-    const inputDocumento = $("#numeroDocumento");
+ function inicializarLogicaSede2() {
+  const selectCurso = $("#curso");
+  const selectPrograma = $("#programa");
+  const radiosTipoEstudio = $("input[name='tipoEstudio']");
+  const divCurso = $("#opcionesCurso");
+  const divPrograma = $("#opcionesPrograma");
+ const formulario = $("#formulario-inscripcion");
+  const inputNombre = $("#nombre");
+  const inputDocumento = $("#numeroDocumento");
+  const selectHorario = $("#horariosDisponibles");
 
-    const cursosDisponibles = [
-      "CURSO DE PRIMEROS AUXILIOS",
-      "CURSO DE MANIPULACIÓN DE ALIMENTOS",
-      "CURSO DE SALUD OCUPACIONAL",
-    ];
+  const horariosCurso = [
+    "8:00 AM - 12:00 PM - Presencial",
+    "2:00 PM - 6:00 PM - Presencial",
+    "5:00 PM - 8:00 PM - Presencial",
+    "8:00 AM - 12:00 PM - Semipresencial",
+    "2:00 PM - 6:00 PM - Semipresencial",
+    "8:00 AM - 4:00 PM - Semipresencial-Domingo"
+  ];
 
-    const programasDisponibles = [
-      "AUXILIAR EN ENFERMERÍA",
-      "AUXILIAR EN SISTEMAS",
-      "AUXILIAR EN SALUD ORAL",
-      "AUXILIAR ADMINISTRATIVO EN SALUD",
-    ];
+  const horariosPrograma = [
+    "6:45 AM - 9:00 AM - Presencial",
+    "9:30 AM - 11:44 AM - Presencial",
+    "2:00 PM - 4:00 PM - Presencial",
+    "6:45 AM - 12:15 AM - Semipresencial",
+    "12:45 PM - 6:15 PM - Semipresencial",
+    "4:15 PM - 6:30 PM - Presencial"
+  ];
 
-    function actualizarOpciones() {
-      const tipoSeleccionado = radiosTipoEstudio.filter(":checked").val();
+  const cursosDisponibles = [
+    "CURSO DE PRIMEROS AUXILIOS",
+    "CURSO DE MANIPULACIÓN DE ALIMENTOS",
+    "CURSO DE SALUD OCUPACIONAL",
+  ];
 
-      if (tipoSeleccionado === "curso") {
-        divCurso.removeClass("d-none");
-        divPrograma.addClass("d-none");
-        selectCurso.html('<option value="">Seleccionar...</option>');
-        cursosDisponibles.forEach((curso) => {
-          selectCurso.append(`<option value="${curso}">${curso}</option>`);
-        });
-      } else if (tipoSeleccionado === "programa") {
-        divPrograma.removeClass("d-none");
-        divCurso.addClass("d-none");
-        selectPrograma.html('<option value="">Seleccionar...</option>');
-        programasDisponibles.forEach((programa) => {
-          selectPrograma.append(`<option value="${programa}">${programa}</option>`);
-        });
-      }
+  const programasDisponibles = [
+    "AUXILIAR EN ENFERMERÍA",
+    "AUXILIAR EN SISTEMAS",
+    "AUXILIAR EN SALUD ORAL",
+    "AUXILIAR ADMINISTRATIVO EN SALUD",
+  ];
+
+  function actualizarHorarios() {
+    const tipoSeleccionado = radiosTipoEstudio.filter(":checked").val();
+    const horarios = tipoSeleccionado === "curso" ? horariosCurso : horariosPrograma;
+
+    selectHorario.html('<option value="">Seleccionar...</option>');
+    horarios.forEach((horario) => {
+      selectHorario.append(`<option value="${horario}">${horario}</option>`);
+    });
+  }
+
+  function actualizarOpciones() {
+    const tipoSeleccionado = radiosTipoEstudio.filter(":checked").val();
+
+    if (tipoSeleccionado === "curso") {
+      divCurso.removeClass("d-none");
+      divPrograma.addClass("d-none");
+      selectCurso.html('<option value="">Seleccionar...</option>');
+      cursosDisponibles.forEach((curso) => {
+        selectCurso.append(`<option value="${curso}">${curso}</option>`);
+      });
+    } else if (tipoSeleccionado === "programa") {
+      divPrograma.removeClass("d-none");
+      divCurso.addClass("d-none");
+      selectPrograma.html('<option value="">Seleccionar...</option>');
+      programasDisponibles.forEach((programa) => {
+        selectPrograma.append(`<option value="${programa}">${programa}</option>`);
+      });
     }
+    actualizarHorarios();
+  }
 
-    formulario.submit(async function (event) {
-      event.preventDefault();
+  formulario.submit(async function (event) {
+    event.preventDefault();
 
-      Swal.fire({
-        title: "Enviando inscripción...",
-        text: "Por favor, espere un momento.",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => Swal.showLoading(),
+    Swal.fire({
+      title: "Enviando inscripción...",
+      text: "Por favor, espere un momento.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const formData = new FormData(this);
+      const idSede = document.getElementById("id_sede").value;
+      formData.append("id_sede", idSede);
+
+      const respuesta = await fetch("crear_inscripcion.php", {
+        method: "POST",
+        body: formData,
       });
 
+      const text = await respuesta.text();
+      let resultado;
+
       try {
-        const formData = new FormData(this);
-        const idSede = document.getElementById("id_sede").value;
-        formData.append("id_sede", idSede);
+        resultado = JSON.parse(text);
+      } catch (jsonError) {
+        console.error("⚠️ Error al parsear JSON:", text);
+        throw new Error("Respuesta inválida del servidor");
+      }
 
-        const respuesta = await fetch("crear_inscripcion.php", {
-          method: "POST",
-          body: formData,
-        });
-
-        const text = await respuesta.text();
-        let resultado;
-
-        try {
-          resultado = JSON.parse(text);
-        } catch (jsonError) {
-          console.error("⚠️ Error al parsear JSON:", text);
-          throw new Error("Respuesta inválida del servidor");
-        }
-
-        setTimeout(() => {
-          Swal.close();
-          if (resultado.success || resultado.message.includes("ya está registrado")) {
-            Swal.fire({
-              icon: resultado.success ? "success" : "warning",
-              title: resultado.success ? "¡Inscripción exitosa!" : "Usuario ya registrado",
-              text: resultado.message,
-              timer: 3000,
-              timerProgressBar: true,
-              showConfirmButton: false,
-              willClose: () => {
-                window.location.href = "index.php";
-              },
-            });
-          } else {
-            Swal.fire({
-              icon: "error",
-              title: "Error en la inscripción",
-              text: resultado.message,
-              confirmButtonText: "OK",
-            });
-          }
-        }, 500);
-      } catch (error) {
-        setTimeout(() => {
-          Swal.close();
+      setTimeout(() => {
+        Swal.close();
+        if (resultado.success || resultado.message.includes("ya está registrado")) {
+          Swal.fire({
+            icon: resultado.success ? "success" : "warning",
+            title: resultado.success ? "¡Inscripción exitosa!" : "Usuario ya registrado",
+            text: resultado.message,
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            willClose: () => {
+              window.location.href = "index.php";
+            },
+          });
+        } else {
           Swal.fire({
             icon: "error",
-            title: "Error de conexión",
-            text: "No se pudo conectar con el servidor. Inténtelo de nuevo más tarde.\n\n" + error.message,
-            confirmButtonText: "Reintentar",
+            title: "Error en la inscripción",
+            text: resultado.message,
+            confirmButtonText: "OK",
           });
-        }, 500);
-      }
-    });
+        }
+      }, 500);
+    } catch (error) {
+      setTimeout(() => {
+        Swal.close();
+        Swal.fire({
+          icon: "error",
+          title: "Error de conexión",
+          text: "No se pudo conectar con el servidor. Inténtelo de nuevo más tarde.\n\n" + error.message,
+          confirmButtonText: "Reintentar",
+        });
+      }, 500);
+    }
+  });
 
-    inputNombre.on("input", function () {
-      $(this).val($(this).val().replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]/g, ""));
-    });
+  inputNombre.on("input", function () {
+    $(this).val($(this).val().replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]/g, ""));
+  });
 
-    radiosTipoEstudio.on("change", actualizarOpciones);
-    actualizarOpciones();
-  }
+  radiosTipoEstudio.on("change", actualizarOpciones);
+  actualizarOpciones();
+  radiosTipoEstudio.filter(":checked").trigger("change"); // 🔧 Esta línea soluciona el problema
+}
 });
 
 

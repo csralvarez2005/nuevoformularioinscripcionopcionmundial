@@ -72,16 +72,14 @@ try {
         $telefono            = $conn->real_escape_string($_POST['telefono'] ?? '');
         $sisben              = $conn->real_escape_string($_POST['sisben'] ?? '');
         $edad                = $conn->real_escape_string($_POST['edad'] ?? '');
-        $porcentajeBeca      = $conn->real_escape_string($_POST['porcentajeBeca'] ?? '');
-        $programaEstudio     = $conn->real_escape_string($_POST['programaEstudio'] ?? '');
+        $tipoEstudio         = $conn->real_escape_string($_POST['tipoEstudio'] ?? '');
+        $curso               = $conn->real_escape_string($_POST['curso'] ?? '');
+        $programa            = $conn->real_escape_string($_POST['programa'] ?? '');
         $horariosDisponibles = $conn->real_escape_string($_POST['horariosDisponibles'] ?? '');
-        $tipoEstudio = $conn->real_escape_string($_POST['tipoEstudio'] ?? '');
-        $curso       = $conn->real_escape_string($_POST['curso'] ?? '');
-        $programa    = $conn->real_escape_string($_POST['programa'] ?? '');
 
         $sql_insert = "INSERT INTO inscripciones 
-            (id_sede, nombre, numeroDocumento, tipoEstudio, curso, programaEstudio, fecha_registro)
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+            (id_sede, nombre, numeroDocumento, direccion, telefono, sisben, edad, tipoEstudio, curso, programaEstudio, horariosDisponibles, fecha_registro)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql_insert);
         if (!$stmt) {
@@ -89,18 +87,30 @@ try {
         }
 
         $stmt->bind_param(
-            "sssssss",
+            "ssssssssssss",
             $id_sede,
             $nombre,
             $numeroDocumento,
+            $direccion,
+            $telefono,
+            $sisben,
+            $edad,
             $tipoEstudio,
             $curso,
             $programa,
+            $horariosDisponibles,
             $fecha_registro
         );
 
     } else {
         throw new Exception("Sede no reconocida.");
+    }
+
+    if ($stmt->execute()) {
+        $response["success"] = true;
+        $response["message"] = "¡Inscripción realizada con éxito, " . strtoupper($nombre) . "! Para más información, comunícate con nuestra línea de atención 3043186185.";
+    } else {
+        throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
     }
 
     if ($stmt->execute()) {
